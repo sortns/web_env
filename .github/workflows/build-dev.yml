@@ -1,8 +1,8 @@
-name: (DEV) Build\Deploy to cluster 
+name: Build&Deploy to cluster 
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "master" ]
   workflow_dispatch:
 
 
