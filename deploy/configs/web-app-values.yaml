@@ -1,0 +1,68 @@
+nameOverride: "web-ixsa-net"
+fullnameOverride: "web-ixsa-net"
+
+deployment:
+  replicaCount: 1
+  image:
+    repository: harbor.ixsa.net/ixsa_net/web
+    pullPolicy: Always
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: "0.0.1"
+
+  secret:
+    enabled: true
+    app_imagePullSecrets_name: ixsa-net-registry
+    app_imagePullSecrets: 
+      - name: ixsa-net-registry
+    app_dockerconfigjson: ${docker-registry-cred}
+
+
+  podAnnotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/path: '/metrics'
+    prometheus.io/port: '8000'
+
+  ports:
+    enabled: true
+    list:
+      - name: tcp
+        containerPort: 80
+        protocol: TCP
+
+  livenessProbe:
+    enabled: true
+    list:
+      httpGet:
+        path: /
+        port: 80
+
+  readinessProbe:
+    enabled: true
+    list:
+      httpGet:
+        path: /
+        port: 80
+
+
+service:
+  enabled: true
+  type: ClusterIP
+  name: web-ixsa-net
+  port: 80
+  targetPort: 80
+  protocol: TCP
+
+
+ingress:
+  enabled: true
+  # className: ""
+  annotations: 
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: web.ixsa.net
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+
+

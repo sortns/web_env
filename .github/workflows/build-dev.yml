@@ -1,0 +1,38 @@
+name: (DEV) Build\Deploy to cluster 
+
+on:
+  push:
+    branches: [ "dev" ]
+  workflow_dispatch:
+
+
+jobs:              
+  run-build-job:
+    uses: Ltd-Independent-space/shared/.github/workflows/build-push.yml@master
+    with:
+      REGISTRY_HUB_NAME: "harbor.ixsa.net"
+      REGISTRY_PROJECT: "ixsa_net"
+      CONTAINER_IMAGE_NAME: "web"
+      CONTAINER_IMAGE_TAG: "latest"
+      CONTAINER_IMAGE_VERSION: "0.0.1"
+      CONTAINER_IMAGE_PATH: "./deploy/image/Dockerfile"
+      VAULT_DOCKER_USER_PATH: "ixsa/data/infrastructure/harbor/projects/ixsa_net/write username"
+      VAULT_DOCKER_TOKEN_PATH: "ixsa/data/infrastructure/harbor/projects/ixsa_net/write password"
+    secrets:
+      VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
+      VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
+      
+    
+
+  deploying:
+    needs: [run-build-job]
+    if: needs.run-build-job.outputs.out_status == 'success'
+    uses: Ltd-Independent-space/shared/.github/workflows/deploy-k8s.yml@master
+    with:
+      VAULT_URL: "https://vault.ixsa.net"
+      RESOURCE: "helm_release.web-ixsa-net"
+    secrets:
+      VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
+      VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
+
+
