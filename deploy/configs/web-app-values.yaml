@@ -7,7 +7,7 @@ deployment:
     repository: harbor.ixsa.net/ixsa_net/web
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "0.0.1"
+    tag: ${app_version}
 
   secret:
     enabled: true

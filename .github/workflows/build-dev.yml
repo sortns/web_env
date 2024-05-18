@@ -14,7 +14,7 @@ jobs:
       REGISTRY_PROJECT: "ixsa_net"
       CONTAINER_IMAGE_NAME: "web"
       CONTAINER_IMAGE_TAG: "latest"
-      CONTAINER_IMAGE_VERSION: "0.0.1"
+      CONTAINER_IMAGE_VERSION: "0.0.2"
       CONTAINER_IMAGE_PATH: "./deploy/image/Dockerfile"
       VAULT_DOCKER_USER_PATH: "ixsa/data/infrastructure/harbor/projects/ixsa_net/write username"
       VAULT_DOCKER_TOKEN_PATH: "ixsa/data/infrastructure/harbor/projects/ixsa_net/write password"

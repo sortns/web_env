@@ -19,6 +19,7 @@ resource "helm_release" "web-ixsa-net" {
   max_history      = 10
 
   values = [templatefile("configs/web-app-values.yaml", {
-    docker-registry-cred = data.vault_generic_secret.registry.data["dockerconfigjson"]
+    docker-registry-cred = data.vault_generic_secret.registry.data["dockerconfigjson"],
+    app_version          = "0.0.2",
   })]
 }
