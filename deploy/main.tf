@@ -12,13 +12,15 @@ resource "helm_release" "web-ixsa-net" {
   repository = "https://sortns.github.io/helm/"
   chart      = "simple-app"
   # chart            = "./helm/simple-app"
-  version          = "0.0.8"
+  version          = "0.0.9"
   namespace        = "ixsa"
   create_namespace = true
   cleanup_on_fail  = true
   max_history      = 10
 
-  values = [templatefile("configs/web-app-values.yaml", {
+  values = [templatefile("configs/app-values.yaml", {
+    image_tag = var.image_tag
+
     docker-registry-cred = data.vault_generic_secret.registry.data["dockerconfigjson"],
     app_version          = "0.0.2",
   })]

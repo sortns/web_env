@@ -10,4 +10,6 @@ variable "K8S_CONFIG" {
   type    = string
   default = "~/.kube/k8s-deployer.yaml"
 }
-
+variable "image_tag" {
+  type = string
+}
