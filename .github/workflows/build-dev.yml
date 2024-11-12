@@ -6,15 +6,20 @@ on:
   workflow_dispatch:
 
 
-jobs:              
+jobs: 
+  get_time:
+    uses: Ltd-Independent-space/shared/.github/workflows/get_timestamp.yml@master
+    
+    
   run-build-job:
+    needs: [get_time]
     uses: Ltd-Independent-space/shared/.github/workflows/build-push.yml@master
     with:
       REGISTRY_HUB_NAME: "harbor.ixsa.net"
       REGISTRY_PROJECT: "ixsa_net"
       CONTAINER_IMAGE_NAME: "web"
-      CONTAINER_IMAGE_TAG: "latest"
-      CONTAINER_IMAGE_VERSION: "0.0.3"
+      CONTAINER_IMAGE_TAG: "0.0.3"
+      CONTAINER_IMAGE_VERSION: ${{ needs.get_time.outputs.time }}
       CONTAINER_IMAGE_PATH: "./deploy/image/Dockerfile"
       VAULT_DOCKER_USER_PATH: "ixsa/data/infrastructure/harbor/projects/ixsa_net/write username"
       VAULT_DOCKER_TOKEN_PATH: "ixsa/data/infrastructure/harbor/projects/ixsa_net/write password"
@@ -25,12 +30,13 @@ jobs:
     
 
   deploying:
-    needs: [run-build-job]
+    needs: [run-build-job, get_time]
     if: needs.run-build-job.outputs.out_status == 'success'
     uses: Ltd-Independent-space/shared/.github/workflows/deploy-k8s.yml@master
     with:
       VAULT_URL: "https://vault.ixsa.net"
       RESOURCE: "helm_release.web-ixsa-net"
+      IMAGE_TAG: ${{ needs.get_time.outputs.time }}
     secrets:
       VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
       VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
