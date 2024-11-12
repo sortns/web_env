@@ -20,6 +20,6 @@ resource "helm_release" "web-ixsa-net" {
 
   values = [templatefile("configs/web-app-values.yaml", {
     docker-registry-cred = data.vault_generic_secret.registry.data["dockerconfigjson"],
-    app_version          = "0.0.2",
+    app_version          = "0.0.3",
   })]
 }
