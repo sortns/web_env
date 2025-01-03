@@ -1,6 +1,8 @@
 #!/bin/bash
 ### source: https://github.com/ReconXSecurityHQ/highlight
 
+### ANSI collors: https://ansi.gabebanks.net
+
 hl() {
     
     RESET="\033[0m"
@@ -22,7 +24,7 @@ hl() {
     awk -v RESET="$RESET" -v CYAN="$CYAN" -v GREEN="$GREEN" -v YELLOW="$YELLOW" -v MAGENTA="$MAGENTA" -v RED="$RED" -v BLUE="$BLUE" '
         {
             # Highlight IPv4 addresses
-            gsub(/([0-9]{1,3}\.){3}[0-9]{1,3}/, GREEN "&" RESET)
+            gsub(/([0-9]{1,3}\.){3}[0-9]{1,3}/, RED "&" RESET)
 
             # Highlight IPv6 addresses
             gsub(/([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}/, MAGENTA "&" RESET)
@@ -31,13 +33,13 @@ hl() {
             gsub(/netmask [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/, YELLOW "&" RESET)
 
             # Highlight URLs
-            gsub(/(https?|ftp|ftps|sftp|ssh|telnet|file|git):\/\/[^ \t\n\r\f\v<>"]+|(www\.)?([a-zA-Z0-9_-]+\.[a-zA-Z]{2,6})(\/\S*)?/, BLUE "&" RESET)
+            gsub(/(https?|ftp|ftps|sftp|ssh|telnet|file|git):\/\/[^ \t\n\r\f\v<>"]+|(www\.)?([a-zA-Z0-9_-]+\.[a-zA-Z]{2,6})(\/\S*)?/, CYAN "&" RESET)
 
             # Highlight domains with ports (stop at space or punctuation)
             gsub(/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/, MAGENTA "&" RESET)
 
             # Highlight ports (assuming common formats)
-            gsub(/[0-9]+\/tcp|udp/, GREEN "&" RESET)
+            gsub(/[0-9]+\/tcp|udp/, RED "&" RESET)
 
             # Highlight important script details (e.g., title, category)
             gsub(/[a-zA-Z0-9-]+:\s/, CYAN "&" RESET)
