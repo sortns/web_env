@@ -22,6 +22,6 @@ resource "helm_release" "web-ixsa-net" {
     image_tag = var.image_tag
 
     docker-registry-cred = data.vault_generic_secret.registry.data["dockerconfigjson"],
-    app_version          = "0.0.3",
+    app_version          = "0.0.4",
   })]
 }

@@ -18,7 +18,7 @@ jobs:
       REGISTRY_HUB_NAME: "harbor.ixsa.net"
       REGISTRY_PROJECT: "ixsa_net"
       CONTAINER_IMAGE_NAME: "web"
-      CONTAINER_IMAGE_TAG: "0.0.3"
+      CONTAINER_IMAGE_TAG: "0.0.4"
       CONTAINER_IMAGE_VERSION: ${{ needs.get_time.outputs.time }}
       CONTAINER_IMAGE_PATH: "./deploy/image/Dockerfile"
       VAULT_DOCKER_USER_PATH: "ixsa/data/infrastructure/harbor/projects/ixsa_net/write username"
