@@ -3,16 +3,34 @@
 
 ### ANSI collors: https://ansi.gabebanks.net
 
+# For Debian it doesn't really work without:
+# apt install gawk
+
 hl() {
-    
-    RESET="\033[0m"
-    CYAN="\033[36m"
-    GREEN="\033[32m"
-    YELLOW="\033[33m"
-    MAGENTA="\033[35m"
-    RED="\033[31m"
-    BLUE="\033[34m"
-    
+    # Detect available awk version and force gawk if present
+    if command -v gawk >/dev/null 2>&1; then
+        AWK_CMD="gawk"
+        AWK_TYPE="gawk"
+    elif command -v nawk >/dev/null 2>&1; then
+        AWK_CMD="nawk"
+        AWK_TYPE="nawk"
+    else
+        AWK_CMD="awk"
+        AWK_TYPE="mawk"  # Defaulting to mawk if awk is found but gawk isn't
+    fi
+
+    # Define ANSI colors using `tput`
+    RESET=$(tput sgr0)
+    CYAN=$(tput setaf 6)
+    GREEN=$(tput setaf 2)
+    YELLOW=$(tput setaf 3)
+    MAGENTA=$(tput setaf 5)
+    RED=$(tput setaf 1)
+    BLUE=$(tput setaf 4)
+
+    # Corrected STRIP_ANSI regex to prevent `sed` errors
+    STRIP_ANSI='s/\x1B\[[0-9;]*[mK]//g; s/\x1B\(B//g; s/\x1B\][0-9;]*//g'
+
     # Check if input is provided
     if [ -t 0 ] && [ $# -eq 0 ]; then
         echo "Usage: "
@@ -21,44 +39,46 @@ hl() {
         return 1
     fi
 
-    awk -v RESET="$RESET" -v CYAN="$CYAN" -v GREEN="$GREEN" -v YELLOW="$YELLOW" -v MAGENTA="$MAGENTA" -v RED="$RED" -v BLUE="$BLUE" '
-        {
-            # Highlight IPv4 addresses
-            gsub(/([0-9]{1,3}\.){3}[0-9]{1,3}/, RED "&" RESET)
+    # Remove all existing ANSI colors before processing
+    sed -E "$STRIP_ANSI" | "$AWK_CMD" -v RESET="$RESET" -v CYAN="$CYAN" -v GREEN="$GREEN" \
+      -v YELLOW="$YELLOW" -v MAGENTA="$MAGENTA" -v RED="$RED" -v BLUE="$BLUE" '
+    {
+        # Highlight IPv4 addresses
+        gsub(/([0-9]{1,3}\.){3}[0-9]{1,3}/, RED "&" RESET);
 
-            # Highlight IPv6 addresses
-            gsub(/([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}/, MAGENTA "&" RESET)
-
-            # Highlight netmask
-            gsub(/netmask [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/, YELLOW "&" RESET)
-
-            # Highlight URLs
-            gsub(/(https?|ftp|ftps|sftp|ssh|telnet|file|git):\/\/[^ \t\n\r\f\v<>"]+|(www\.)?([a-zA-Z0-9_-]+\.[a-zA-Z]{2,6})(\/\S*)?/, CYAN "&" RESET)
-
-            # Highlight domains with ports (stop at space or punctuation)
-            gsub(/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/, MAGENTA "&" RESET)
-
-            # Highlight ports (assuming common formats)
-            gsub(/[0-9]+\/tcp|udp/, RED "&" RESET)
-
-            # Highlight important script details (e.g., title, category)
-            gsub(/[a-zA-Z0-9-]+:\s/, CYAN "&" RESET)
-
-            # Highlight text inside parentheses (text)
-            gsub(/\([^)]+\)/, YELLOW "&" RESET)
-
-            # HTML tags and attribute highlighting
-            {
-                gsub(/<[^<>]+>/, RED "&" RESET)
-
-                # Highlight attributes
-                gsub(/ [a-zA-Z-]+="[^"]*?+"/, GREEN "&" RESET)
-
-                # Highlight text inside double quotes
-                gsub(/"[^"]*?+/, YELLOW "&" RESET)
-            }
-
-            print
+        # IPv6 Handling: Use full regex in gawk, simplified regex otherwise
+        if ("'$AWK_TYPE'" == "gawk") {
+            gsub(/([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}/, MAGENTA "&" RESET);
+        } else {
+            gsub(/[0-9a-fA-F:]+/, MAGENTA "&" RESET);
         }
-    '
+
+        # Highlight MAC addresses
+        gsub(/([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}/, YELLOW "&" RESET);
+
+        # Highlight netmask
+        gsub(/netmask [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/, YELLOW "&" RESET);
+
+        # Highlight URLs
+        gsub(/(https?|ftp|sftp|ssh|telnet|file|git):\/\/[a-zA-Z0-9._-]+/, CYAN "&" RESET);
+
+        # Highlight domains
+        gsub(/([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}/, MAGENTA "&" RESET);
+
+        # Highlight ports (common formats)
+        gsub(/[0-9]+\/(tcp|udp)/, RED "&" RESET);
+
+        # Highlight words followed by a colon (e.g., "Title: something")
+        gsub(/[a-zA-Z0-9_-]+:/, CYAN "&" RESET);
+
+        # Highlight text inside parentheses
+        gsub(/\([^)]*\)/, YELLOW "&" RESET);
+
+        # Highlight HTML Tags (basic highlight)
+        gsub(/<[^<>]+>/, RED "&" RESET);
+        gsub(/ [a-zA-Z-]+="[^"]*"/, GREEN "&" RESET);
+        gsub(/"[^"]*"/, YELLOW "&" RESET);
+
+        print;
+    }'
 }
