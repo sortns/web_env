@@ -7,7 +7,7 @@
 # apt install gawk
 
 hl() {
-    # Detect available awk version and force gawk if present
+    # Detect available awk version; prefer gawk if available
     if command -v gawk >/dev/null 2>&1; then
         AWK_CMD="gawk"
         AWK_TYPE="gawk"
@@ -16,10 +16,10 @@ hl() {
         AWK_TYPE="nawk"
     else
         AWK_CMD="awk"
-        AWK_TYPE="mawk"  # Defaulting to mawk if awk is found but gawk isn't
+        AWK_TYPE="mawk"  # Defaulting to mawk if gawk isn't available
     fi
 
-    # Define ANSI colors using `tput`
+    # Define ANSI colors using tput
     RESET=$(tput sgr0)
     CYAN=$(tput setaf 6)
     GREEN=$(tput setaf 2)
@@ -28,26 +28,33 @@ hl() {
     RED=$(tput setaf 1)
     BLUE=$(tput setaf 4)
 
-    # Corrected STRIP_ANSI regex to prevent `sed` errors
-    STRIP_ANSI='s/\x1B\[[0-9;]*[mK]//g; s/\x1B\(B//g; s/\x1B\][0-9;]*//g'
+    # Use a literal escape character (instead of \x1B) in the regex.
+    ESC=$'\033'
+    # The STRIP_ANSI regex now:
+    #  • removes CSI sequences: ESC [ ... ending in m or K,
+    #  • removes charset reset sequences: ESC (B,
+    #  • removes OSC sequences: ESC ] ...,
+    #  • and also strips any stray literal "(B"
+    STRIP_ANSI="s/${ESC}\[[0-9;]*[mK]//g; s/${ESC}\(B//g; s/${ESC}\][0-9;]*//g; s/\(B//g"
 
     # Check if input is provided
     if [ -t 0 ] && [ $# -eq 0 ]; then
-        echo "Usage: "
-        echo "1. highlight < file"
-        echo "2. <command> | highlight"
+        echo "Usage:"
+        echo "  highlight < file"
+        echo "  <command> | highlight"
         return 1
     fi
 
-    # Remove all existing ANSI colors before processing
-    sed -E "$STRIP_ANSI" | "$AWK_CMD" -v RESET="$RESET" -v CYAN="$CYAN" -v GREEN="$GREEN" \
-      -v YELLOW="$YELLOW" -v MAGENTA="$MAGENTA" -v RED="$RED" -v BLUE="$BLUE" '
+    # Remove all ANSI codes before processing.
+    sed -E "$STRIP_ANSI" | "$AWK_CMD" \
+        -v RESET="$RESET" -v CYAN="$CYAN" -v GREEN="$GREEN" \
+        -v YELLOW="$YELLOW" -v MAGENTA="$MAGENTA" -v RED="$RED" -v BLUE="$BLUE" '
     {
         # Highlight IPv4 addresses
         gsub(/([0-9]{1,3}\.){3}[0-9]{1,3}/, RED "&" RESET);
 
-        # IPv6 Handling: Use full regex in gawk, simplified regex otherwise
-        if ("'$AWK_TYPE'" == "gawk") {
+        # IPv6 Handling: Use full regex in gawk; otherwise simplified version
+        if ("'"$AWK_TYPE"'" == "gawk") {
             gsub(/([0-9a-fA-F]{1,4}:){1,7}[0-9a-fA-F]{1,4}/, MAGENTA "&" RESET);
         } else {
             gsub(/[0-9a-fA-F:]+/, MAGENTA "&" RESET);
@@ -56,7 +63,7 @@ hl() {
         # Highlight MAC addresses
         gsub(/([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}/, YELLOW "&" RESET);
 
-        # Highlight netmask
+        # Highlight netmask lines
         gsub(/netmask [0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/, YELLOW "&" RESET);
 
         # Highlight URLs
@@ -68,13 +75,12 @@ hl() {
         # Highlight ports (common formats)
         gsub(/[0-9]+\/(tcp|udp)/, RED "&" RESET);
 
-        # Highlight words followed by a colon (e.g., "Title: something")
-        gsub(/[a-zA-Z0-9_-]+:/, CYAN "&" RESET);
+        # (The original functionality that highlighted words ending with a colon has been removed.)
 
         # Highlight text inside parentheses
         gsub(/\([^)]*\)/, YELLOW "&" RESET);
 
-        # Highlight HTML Tags (basic highlight)
+        # Highlight HTML tags (basic highlighting)
         gsub(/<[^<>]+>/, RED "&" RESET);
         gsub(/ [a-zA-Z-]+="[^"]*"/, GREEN "&" RESET);
         gsub(/"[^"]*"/, YELLOW "&" RESET);
